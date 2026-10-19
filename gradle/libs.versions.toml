@@ -6,6 +6,7 @@ composeBom = "2026.09.00"
 coreKtx = "1.19.1"
 flocon = "1.10.0"
 hilt = "2.60.1"
+hiltNavigationCompose = "1.4.0"
 kotlin = "2.4.21"
 kotlinSerializationJson = "1.11.0"
 ksp = "2.3.12"
@@ -22,6 +23,7 @@ androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graph
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startupRuntime" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
