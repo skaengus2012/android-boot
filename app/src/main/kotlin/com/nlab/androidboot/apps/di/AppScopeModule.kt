@@ -4,11 +4,13 @@ import android.content.Context
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import kotlinx.serialization.json.Json
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.Multibinds
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
@@ -18,14 +20,27 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
-object AppScopeModule {
+interface AppScopeBindModule {
+    @Multibinds
+    fun bindInterceptors(): Set<Interceptor>
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AppScopeProvideModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        interceptors: Set<Interceptor>
+        interceptors: Set<@JvmSuppressWildcards Interceptor>
     ): OkHttpClient = OkHttpClient.Builder()
         .apply { interceptors.forEach { addInterceptor(it) } }
         .build()
+
+    @Provides
+    @Singleton
+    fun provideJson(): Json = Json {
+        ignoreUnknownKeys = true
+    }
 
     @Provides
     @Singleton
