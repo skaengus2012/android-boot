@@ -1,35 +1,39 @@
 ---
 name: create-network-datasource
-description: Use when creating or updating network DataSource, Retrofit ApiService, and kotlinx.serialization response DTO models from an API endpoint URL or sample JSON response. Mandatory whenever the user asks to create a datasource, generate API models, or implement Retrofit services for a REST API.
+description: Use when creating or updating network DataSource, Retrofit ApiService, kotlinx.serialization response DTO models, and data layer Repository from an API endpoint URL or sample JSON response. Mandatory whenever the user asks to create a datasource, repository, generate API models, or implement Retrofit services for a REST API.
 ---
 
-# Create Network DataSource
+# Create Network DataSource & Repository
 
 ## Overview
-This skill generates complete, production-ready network DataSource files for Android, enforcing single-file encapsulation for Retrofit interfaces and Kotlinx Serialization response models.
+This skill generates complete, production-ready network **DataSource** and **Repository** files for Android, enforcing single-file encapsulation for Retrofit interfaces and Kotlinx Serialization response models, as well as safe `Result`-wrapped data access in the repository layer.
 
-A DataSource file lives in `app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt` and encapsulates:
-1. **DataSource Class**: Injected `@Singleton` delegating to Retrofit service via `RetrofitFactory`.
-2. **ApiService Interface**: `private` Retrofit interface hidden within the same file.
-3. **Response DTO Models**: `@Serializable` Kotlin data classes with mandatory `@SerialName` annotations and safe default values.
+The workflow creates two coordinated files:
+1. **DataSource File**: `app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`
+   - **DataSource Class**: Injected `@Singleton` delegating to Retrofit service via `RetrofitFactory`.
+   - **ApiService Interface**: `private` Retrofit interface hidden within the same file.
+   - **Response DTO Models**: `@Serializable` Kotlin data classes with mandatory `@SerialName` annotations and safe default values.
+2. **Repository File**: `app/src/main/kotlin/com/nlab/androidboot/data/{Name}Repository.kt`
+   - **Repository Class**: Injected `@Singleton` receiving `{Name}DataSource`.
+   - **Failure Handling**: Handles network/api failures safely via `suspendRunCatching` from `com.nlab.androidboot.coroutines` (rethrowing `CancellationException` to preserve coroutine cancellation and logging exceptions).
+   - **Direct Return**: Returns the API Response DTO object directly wrapped in `Result`.
 
 ---
 
 ## When to Use
-- When given an API endpoint URL (e.g., `https://api.github.com/repos/{owner}/{repo}/issues`) to implement a DataSource.
+- When given an API endpoint URL (e.g., `https://api.github.com/repos/{owner}/{repo}/issues`) to implement network/data layer components.
 - When generating Retrofit request/response models from sample JSON data or API specifications.
-- When creating network layer components conforming to the project's DataSource conventions.
+- When creating network DataSource and data layer Repository conforming to the project conventions.
 
 ---
 
 ## Zero-Friction Input Principle
 When the user provides an API endpoint URL, cURL command, or API specification / JSON:
-- **Do NOT ask preliminary questions** (such as DataSource name, HTTP method, or parameter names) if they can be reasonably inferred.
-- **Infer DataSource Name Automatically**: Derive PascalCase name from the domain or resource path (e.g., `https://api.github.com/repos/...` -> `GithubDataSource`, `https://newsapi.org/v2/top-headlines` -> `NewsDataSource`, `https://api.weatherapi.com/...` -> `WeatherDataSource`).
+- **Do NOT ask preliminary questions** (such as DataSource/Repository name, HTTP method, or parameter names) if they can be reasonably inferred.
+- **Infer Base Name Automatically**: Derive PascalCase name from the domain or resource path (e.g., `https://api.github.com/repos/...` -> `GithubDataSource` & `GithubRepository`, `https://newsapi.org/v2/top-headlines` -> `NewsDataSource` & `NewsRepository`).
 - **Fetch Sample Data Automatically**: If only an endpoint URL or cURL is provided, immediately run `curl -s "{URL}"` to inspect the response structure.
 - **Infer Endpoint & Parameters Automatically**: Extract path variables (e.g., `{id}`, `{owner}`) and query parameters directly from the URL or spec.
-- **Generate, Verify, and Complete**: Immediately create the file, verify via `./gradlew compileDebugKotlin`, and deliver the result.
-
+- **Generate, Verify, and Complete**: Immediately create both DataSource and Repository files, verify via `./gradlew compileDebugKotlin`, and deliver the result.
 
 ---
 
@@ -42,6 +46,8 @@ Every property in every `@Serializable` model MUST have an explicit `@SerialName
 ---
 
 ## Mandatory File Structure & Rules
+
+### 1. DataSource File (`app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`)
 
 A DataSource file MUST follow this exact sequence:
 
@@ -80,7 +86,7 @@ data class {Nested}Model(
 )
 ```
 
-### 1. DataSource Class Rules
+#### DataSource Class Rules
 - **Annotation**: Must have `@Singleton`.
 - **Constructor Injection**: Must use `@Inject constructor(private val retrofitFactory: RetrofitFactory)`.
 - **Interface Delegation**: Must implement and delegate to `{Name}ApiService` via:
@@ -89,7 +95,7 @@ data class {Nested}Model(
   ```
 - **Base URL**: Must always end with a trailing slash `/` (Retrofit requirement). Extract domain and path prefixes properly (e.g., `https://api.github.com/`).
 
-### 2. ApiService Interface Rules
+#### ApiService Interface Rules
 - **Visibility**: Must be `private interface {Name}ApiService`. Never expose ApiService outside the DataSource file.
 - **Async Functions**: All endpoints must be declared as `suspend fun`.
 - **Parameterization**:
@@ -98,7 +104,7 @@ data class {Nested}Model(
   - Request bodies must use `@Body`.
 - **Return Type**: Return `{Name}Response` or `List<{Item}Response>`.
 
-### 3. Response DTO Rules
+#### Response DTO Rules
 - **Annotation**: Every model class must be annotated with `@Serializable`.
 - **Explicit SerialName**: EVERY property MUST have `@SerialName("json_key")`.
 - **Nullability & Safe Defaults**:
@@ -110,6 +116,43 @@ data class {Nested}Model(
 - **Nested Models**:
   - Any nested JSON object or array of objects must be extracted into a separate `@Serializable data class` defined below the parent model in the same file.
   - Model names must be descriptive and PascalCase (e.g., `GitHubUser`, `GitHubLabel`).
+
+---
+
+### 2. Repository File (`app/src/main/kotlin/com/nlab/androidboot/data/{Name}Repository.kt`)
+
+A Repository file MUST follow this exact structure:
+
+```kotlin
+package com.nlab.androidboot.data
+
+import com.nlab.androidboot.coroutines.suspendRunCatching
+import com.nlab.androidboot.network.datasource.{Name}DataSource
+import com.nlab.androidboot.network.datasource.{Name}Response
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class {Name}Repository @Inject constructor(
+    private val {name}DataSource: {Name}DataSource
+) {
+    suspend fun {methodName}(
+        ...
+    ): Result<{Name}Response> = suspendRunCatching {
+        {name}DataSource.{methodName}(...)
+    }
+}
+```
+
+#### Repository Class Rules
+- **Package**: `com.nlab.androidboot.data`.
+- **Annotation**: Must have `@Singleton`.
+- **Constructor Injection**: Must inject `{Name}DataSource` directly (`@Inject constructor(private val {name}DataSource: {Name}DataSource)`).
+- **Api Failure Handling with `suspendRunCatching`**:
+  - Always use `com.nlab.androidboot.coroutines.suspendRunCatching`.
+  - Method return type must be `Result<{Name}Response>` or `Result<List<{Item}Response>>`.
+  - `suspendRunCatching` safely rethrows `CancellationException` and logs unhandled exceptions automatically.
+- **Return Value**: Directly return the DataSource's Response DTO wrapped in `Result`. Do not introduce premature domain mapping unless explicitly requested.
 
 ---
 
@@ -125,7 +168,7 @@ data class {Nested}Model(
 2. **Determine Endpoint Configuration**:
    - Base URL (e.g., `https://api.github.com/`)
    - Relative path with placeholders (e.g., `repos/{owner}/{repo}/issues`)
-   - Function signature and HTTP method (`@GET suspend fun getIssue(...)`)
+   - Function signature and HTTP method (`@GET suspend fun getIssues(...)`)
 
 3. **Derive DTO Hierarchy**:
    - Identify top-level response: object vs array of objects (e.g., `List<GitHubIssueResponse>`).
@@ -133,29 +176,38 @@ data class {Nested}Model(
    - Map field types: string -> `String`, integer ID -> `Long`, small integer -> `Int`, boolean -> `Boolean`, float/double -> `Double`.
    - Apply safe defaults (`? = null`, `emptyList()`, `0`, `false`).
 
-4. **Generate File**:
+4. **Generate DataSource File**:
    - Write to `app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`.
    - Ensure imports: `RetrofitFactory`, `SerialName`, `Serializable`, `retrofit2.create`, `javax.inject.*`.
 
-5. **Verify**:
+5. **Generate Repository File**:
+   - Write to `app/src/main/kotlin/com/nlab/androidboot/data/{Name}Repository.kt`.
+   - Ensure imports: `{Name}DataSource`, `{Name}Response`, `com.nlab.androidboot.coroutines.suspendRunCatching`, `javax.inject.*`.
+   - Implement `suspend fun` returning `Result<{ResponseType}>` using `suspendRunCatching { ... }`.
+
+6. **Verify**:
    - Check Kotlin compilation using `./gradlew compileDebugKotlin`.
-   - Verify all rules (private ApiService, `@Singleton`, `@Inject`, `@SerialName` on all fields, defaults).
+   - Verify all rules (private ApiService, `@Singleton`, `@Inject`, `@SerialName` on all fields, defaults, safe Result via `suspendRunCatching` in Repository).
 
 ---
 
 ## Red Flags - STOP and Fix
 - Missing `@SerialName` on any field ("because the field name matches camelCase already").
 - Making `ApiService` public or placing it in a separate file.
-- Using `class {Name}DataSource` without `@Singleton` or `@Inject`.
+- Using `class {Name}DataSource` or `class {Name}Repository` without `@Singleton` or `@Inject`.
 - Base URL missing the trailing slash `/`.
 - Using `Int` for IDs (IDs should be `Long` or `String`).
 - Leaving collection fields without `= emptyList()` default.
-- Forgetting `suspend` keyword on ApiService methods.
+- Forgetting `suspend` keyword on ApiService or Repository methods.
+- Omitting the Repository or putting Repository in the wrong package instead of `com.nlab.androidboot.data`.
+- Using raw `runCatching` instead of `suspendRunCatching` from `com.nlab.androidboot.coroutines`.
+- Injecting `Retrofit` or `ApiService` into Repository instead of `{Name}DataSource`.
 
 ---
 
-## Canonical Reference Example
-See [GithubDataSource.kt](file:///Users/doohyunnam/Git-Repository/android-boot/app/src/main/kotlin/com/nlab/androidboot/network/datasource/GithubDataSource.kt):
+## Canonical Reference Examples
+
+### 1. DataSource: `GithubDataSource.kt`
 ```kotlin
 package com.nlab.androidboot.network.datasource
 
@@ -175,7 +227,7 @@ class GithubDataSource @Inject constructor(
 
 private interface GithubApiService {
     @GET("repos/{owner}/{repo}/issues")
-    suspend fun getIssue(
+    suspend fun getIssues(
         @Path("owner") owner: String,
         @Path("repo") repo: String
     ): List<GitHubIssueResponse>
@@ -193,6 +245,42 @@ data class GitHubIssueResponse(
     @SerialName("labels") val labels: List<GitHubLabel> = emptyList(),
     @SerialName("locked") val locked: Boolean = false,
     @SerialName("comments") val comments: Int = 0
-    // ...
 )
+
+@Serializable
+data class GitHubUser(
+    @SerialName("login") val login: String,
+    @SerialName("id") val id: Long,
+    @SerialName("avatar_url") val avatarUrl: String
+)
+
+@Serializable
+data class GitHubLabel(
+    @SerialName("id") val id: Long? = null,
+    @SerialName("name") val name: String,
+    @SerialName("color") val color: String? = null
+)
+```
+
+### 2. Repository: `GithubRepository.kt`
+```kotlin
+package com.nlab.androidboot.data
+
+import com.nlab.androidboot.coroutines.suspendRunCatching
+import com.nlab.androidboot.network.datasource.GitHubIssueResponse
+import com.nlab.androidboot.network.datasource.GithubDataSource
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class GithubRepository @Inject constructor(
+    private val githubDataSource: GithubDataSource
+) {
+    suspend fun getIssues(
+        owner: String,
+        repo: String
+    ): Result<List<GitHubIssueResponse>> = suspendRunCatching {
+        githubDataSource.getIssues(owner = owner, repo = repo)
+    }
+}
 ```
