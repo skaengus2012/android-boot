@@ -153,6 +153,7 @@ class {Name}Repository @Inject constructor(
   - Method return type must be `Result<{Name}Response>` or `Result<List<{Item}Response>>`.
   - `suspendRunCatching` safely rethrows `CancellationException` and logs unhandled exceptions automatically.
 - **Return Value**: Directly return the DataSource's Response DTO wrapped in `Result`. Do not introduce premature domain mapping unless explicitly requested.
+- **Strictly Stateless (No Business Logic or State Holders)**: Repositories must act strictly as stateless data coordinators delegating to DataSources. Never place business logic, in-memory state caching (e.g. `MutableStateFlow`), or domain state tracking (such as Favorite toggle or Cart management) inside the Repository. Domain state synchronization must be handled by dedicated domain state holders (e.g. `FavoriteStore`) or UseCases.
 
 ---
 
@@ -202,6 +203,7 @@ class {Name}Repository @Inject constructor(
 - Omitting the Repository or putting Repository in the wrong package instead of `com.nlab.androidboot.data`.
 - Using raw `runCatching` instead of `suspendRunCatching` from `com.nlab.androidboot.coroutines`.
 - Injecting `Retrofit` or `ApiService` into Repository instead of `{Name}DataSource`.
+- Adding business logic, mutable state (`StateFlow`), in-memory caches, or domain state tracking (such as Favorite toggle) inside a Repository instead of using a dedicated domain StateHolder/Store.
 
 ---
 
