@@ -4,7 +4,7 @@
 - **UI**: Jetpack Compose Material 3 (No legacy XML, No Material 2).
 - **DI**: Hilt (`@HiltViewModel`, `@AndroidEntryPoint`, `@Singleton`).
 - **Network**: Retrofit 2 + Kotlinx Serialization. Delegate to `RetrofitFactory` (`com.nlab.androidboot.network.infra.RetrofitFactory`). Never use Gson, Moshi, or raw OkHttp.
-- **Async & State**: Coroutines + `StateFlow`. Use `suspendRunCatching` (`com.nlab.androidboot.coroutines`). Never use RxJava or AsyncTask.
+- **Async & State**: Coroutines + `StateFlow`. Use `suspendRunCatching` (`com.nlab.androidboot.coroutines`) in suspend functions to prevent swallowing `CancellationException`. Never use RxJava or AsyncTask.
 - **Image**: Coil 3 Compose (`AsyncImage`).
 
 ## 2. Data & Network Conventions
