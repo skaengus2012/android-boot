@@ -1,6 +1,6 @@
 ---
 name: create-network-datasource
-description: Use when creating or updating network DataSource, Retrofit ApiService, kotlinx.serialization response DTO models, and data layer Repository from an API endpoint URL or sample JSON response. Mandatory whenever the user asks to create a datasource, repository, generate API models, or implement Retrofit services for a REST API.
+description: Use when creating or updating network DataSource, Retrofit ApiService, kotlinx.serialization response Resource models, and data layer Repository from an API endpoint URL or sample JSON response. Mandatory whenever the user asks to create a datasource, repository, generate API models, or implement Retrofit services for a REST API.
 ---
 
 # Create Network DataSource & Repository
@@ -12,11 +12,11 @@ The workflow creates two coordinated files:
 1. **DataSource File**: `app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`
    - **DataSource Class**: Injected `@Singleton` delegating to Retrofit service via `RetrofitFactory`.
    - **ApiService Interface**: `private` Retrofit interface hidden within the same file.
-   - **Response DTO Models**: `@Serializable` Kotlin data classes with mandatory `@SerialName` annotations and safe default values.
+   - **Response Resource Models**: `@Serializable` Kotlin data classes with mandatory `@SerialName` annotations and safe default values.
 2. **Repository File**: `app/src/main/kotlin/com/nlab/androidboot/data/{Name}Repository.kt`
    - **Repository Class**: Injected `@Singleton` receiving `{Name}DataSource`.
    - **Failure Handling**: Handles network/api failures safely via `suspendRunCatching` from `com.nlab.androidboot.coroutines` (rethrowing `CancellationException` to preserve coroutine cancellation and logging exceptions).
-   - **Direct Return**: Returns the API Response DTO object directly wrapped in `Result`.
+   - **Direct Return**: Returns the API Response Resource object directly wrapped in `Result`.
 
 ---
 
@@ -79,9 +79,9 @@ data class {Name}Response(
     ...
 )
 
-// Nested DTO models
+// Nested Resource models
 @Serializable
-data class {Nested}Model(
+data class {Nested}Resource(
     ...
 )
 ```
@@ -104,7 +104,8 @@ data class {Nested}Model(
   - Request bodies must use `@Body`.
 - **Return Type**: Return `{Name}Response` or `List<{Item}Response>`.
 
-#### Response DTO Rules
+#### Response Resource Model Rules
+- **No 'Dto' Suffix**: NEVER name models with a `Dto` suffix (e.g. avoid `ProductDto`, `UserDto`). Use `Resource` suffix (e.g., `ProductResource`) or clean domain resource names (e.g., `GitHubUser`, `GitHubLabel`).
 - **Annotation**: Every model class must be annotated with `@Serializable`.
 - **Explicit SerialName**: EVERY property MUST have `@SerialName("json_key")`.
 - **Nullability & Safe Defaults**:
@@ -115,7 +116,7 @@ data class {Nested}Model(
   - Non-null ID/key fields: Use `Long` for entity IDs (e.g., `val id: Long`) to prevent 32-bit integer overflow.
 - **Nested Models**:
   - Any nested JSON object or array of objects must be extracted into a separate `@Serializable data class` defined below the parent model in the same file.
-  - Model names must be descriptive and PascalCase (e.g., `GitHubUser`, `GitHubLabel`).
+  - Model names must be descriptive and PascalCase (e.g., `GitHubUser`, `GitHubLabel`, `ProductResource`).
 
 ---
 
@@ -152,7 +153,7 @@ class {Name}Repository @Inject constructor(
   - Always use `com.nlab.androidboot.coroutines.suspendRunCatching`.
   - Method return type must be `Result<{Name}Response>` or `Result<List<{Item}Response>>`.
   - `suspendRunCatching` safely rethrows `CancellationException` and logs unhandled exceptions automatically.
-- **Return Value**: Directly return the DataSource's Response DTO wrapped in `Result`. Do not introduce premature domain mapping unless explicitly requested.
+- **Return Value**: Directly return the DataSource's Response Resource wrapped in `Result`. Do not introduce premature domain mapping unless explicitly requested.
 - **Strictly Stateless (No Business Logic or State Holders)**: Repositories must act strictly as stateless data coordinators delegating to DataSources. Never place business logic, in-memory state caching (e.g. `MutableStateFlow`), or domain state tracking (such as Favorite toggle or Cart management) inside the Repository. Domain state synchronization must be handled by dedicated domain state holders (e.g. `FavoriteStore`) or UseCases.
 
 ---
@@ -171,7 +172,7 @@ class {Name}Repository @Inject constructor(
    - Relative path with placeholders (e.g., `repos/{owner}/{repo}/issues`)
    - Function signature and HTTP method (`@GET suspend fun getIssues(...)`)
 
-3. **Derive DTO Hierarchy**:
+3. **Derive Resource Model Hierarchy**:
    - Identify top-level response: object vs array of objects (e.g., `List<GitHubIssueResponse>`).
    - Extract child objects into dedicated data classes.
    - Map field types: string -> `String`, integer ID -> `Long`, small integer -> `Int`, boolean -> `Boolean`, float/double -> `Double`.
@@ -193,6 +194,7 @@ class {Name}Repository @Inject constructor(
 ---
 
 ## Red Flags - STOP and Fix
+- Using 'Dto' suffix in model names (use 'Resource' suffix or domain nouns instead).
 - Missing `@SerialName` on any field ("because the field name matches camelCase already").
 - Making `ApiService` public or placing it in a separate file.
 - Using `class {Name}DataSource` or `class {Name}Repository` without `@Singleton` or `@Inject`.
