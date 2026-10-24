@@ -8,8 +8,8 @@
 - **Image**: Coil 3 Compose (`AsyncImage`).
 
 ## 2. Data & Network Conventions
-- **Single-File Encapsulation**: DTOs, private ApiService interface, and DataSource class reside in a single file (`network/datasource/{Name}DataSource.kt`).
-- **DTO Annotations**: Every `@Serializable` model MUST define `@SerialName("...")` on all fields with safe default values.
+- **Single-File Encapsulation**: Response Resource models, private ApiService interface, and DataSource class reside in a single file (`network/datasource/{Name}DataSource.kt`).
+- **Resource Model Annotations & Naming**: Every `@Serializable` model MUST define `@SerialName("...")` on all fields with safe default values. NEVER use `Dto` suffix in model names; use `Resource` suffix (e.g., `ProductResource`) or clean domain resource names (e.g., `GitHubUser`, `GitHubLabel`).
 - **Repository Pattern**:
   - Repositories MUST only orchestrate and delegate calls to DataSources, wrapping them via `suspendRunCatching` and returning `Result<T>`. Follow `.agents/skills/create-network-datasource/SKILL.md`.
   - **No Business Logic or State in Repository**: Repositories must remain stateless data pipes. Never place business logic, in-memory state caching, or domain state management (e.g. Favorite toggle, Cart items, mutable `StateFlow`) inside Repositories. Domain state synchronization must be handled by dedicated domain state holders (e.g. `FavoriteStore`) or UseCases.
