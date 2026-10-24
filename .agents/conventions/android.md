@@ -29,14 +29,11 @@
     }
     ```
   - **No Default Values in `UiState` Properties**: Never provide default parameter values in `UiState` (or its child data classes). The ViewModel must explicitly supply all initial values (e.g. via `MutableStateFlow(UiState(...))` or `stateIn(..., initialValue = ...)`), keeping initial state control strictly within the ViewModel.
-- **Avoid API Calls in ViewModel `init` (Prefer Lazy Execution via `stateIn`)**:
+- **Avoid API Calls in ViewModel `init` (Prefer Lazy Execution via `SharingStarted.Lazily`)**:
   - Avoid launching coroutines or triggering API calls inside ViewModel `init { }`. Doing so causes premature work upon instantiation, complicates unit testing, and triggers network requests before the UI is actively observing.
-  - Prioritize reactive data emission triggered when the UI subscribes to `uiState`:
-    - Use cold Flow pipelines converted via `stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5_000), initialValue = ...)`.
-    - Trigger initial data loading reactively upon subscription (e.g. using Flow transformations like `flatMapLatest`, `combine`, or `onStart { ... }`).
-- **Static Metadata Caching via `SharingStarted.Lazily`**:
-  - For static or rarely changing metadata (e.g., category lists, filter chips, configurations) that only needs to be fetched once per ViewModel lifecycle, cache it using `stateIn(scope = viewModelScope, started = SharingStarted.Lazily, initialValue = null)`.
-  - Avoid placing metadata loading inside `WhileSubscribed(5_000)` cold flows (or ephemeral local caches in `channelFlow`), which causes unwanted redundant API refetches whenever the user navigates away and returns to the screen after 5 seconds.
+  - Prioritize lazy reactive execution using `stateIn(scope = viewModelScope, started = SharingStarted.Lazily, initialValue = ...)`:
+    - `SharingStarted.Lazily` initiates data fetching only when the UI starts collecting `uiState`, and reliably retains state across temporary screen exits without unwanted automatic refetches.
+    - Reserve `SharingStarted.WhileSubscribed(5_000)` strictly for continuous real-time streams (e.g. WebSockets, location tracking) where upstream work must actively halt when invisible.
 - **Flow Error Handling & UDF Conventions**:
   - **No Side-Effects in Flow Producers**: Never mutate external state (e.g., calling `showUserMessage()`) inside Flow builder blocks (`flow { }`, `channelFlow { }`). Errors are state, not side-effects; emit errors downstream as pure data.
   - **Two-Tier Pipeline (Private `Result<T>?` vs Public LCE `UiState`)**:
