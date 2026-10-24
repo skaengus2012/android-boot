@@ -12,7 +12,7 @@ The workflow creates two coordinated files:
 1. **DataSource File**: `app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`
    - **DataSource Class**: Injected `@Singleton` delegating to Retrofit service via `RetrofitFactory`.
    - **ApiService Interface**: `private` Retrofit interface hidden within the same file.
-   - **Response Resource Models**: `@Serializable` Kotlin data classes with mandatory `@SerialName` annotations and safe default values.
+   - **Response Resource Models**: `@Serializable` Kotlin data classes with mandatory `@SerialName` annotations.
 2. **Repository File**: `app/src/main/kotlin/com/nlab/androidboot/data/{Name}Repository.kt`
    - **Repository Class**: Injected `@Singleton` receiving `{Name}DataSource`.
    - **Failure Handling**: Handles network/api failures safely via `suspendRunCatching` from `com.nlab.androidboot.coroutines` (rethrowing `CancellationException` to preserve coroutine cancellation and logging exceptions).
@@ -108,11 +108,9 @@ data class {Nested}Resource(
 - **Mandatory 'Resource' Suffix**: Every response model MUST end with the `Resource` suffix (e.g., `ProductResource`, `GitHubUserResource`, `GitHubLabelResource`). Do not omit the suffix or use alternative suffixes.
 - **Annotation**: Every model class must be annotated with `@Serializable`.
 - **Explicit SerialName**: EVERY property MUST have `@SerialName("json_key")`.
-- **Nullability & Safe Defaults**:
-  - Nullable fields: Must have `? = null` default value (e.g., `val body: String? = null`).
-  - Collections / Lists: Must default to `emptyList()` (e.g., `val labels: List<GitHubLabelResource> = emptyList()`).
-  - Booleans: Must have default boolean value (e.g., `val locked: Boolean = false`).
-  - Counters / Numeric stats: Must have default zero (e.g., `val comments: Int = 0`).
+- **Avoid Default Values**:
+  - Avoid assigning arbitrary default values (e.g. `= emptyList()`, `= 0`, `= false`, `= ""`). Model properties strictly according to the API contract.
+  - Use nullable types with optional defaults (`? = null`) only when the field is optional or nullable in the API specification.
   - Non-null ID/key fields: Use `Long` for entity IDs (e.g., `val id: Long`) to prevent 32-bit integer overflow.
 - **Nested Models**:
   - Any nested JSON object or array of objects must be extracted into a separate `@Serializable data class` defined below the parent model in the same file.
@@ -176,7 +174,7 @@ class {Name}Repository @Inject constructor(
    - Identify top-level response: object vs array of objects (e.g., `List<GitHubIssueResponse>`).
    - Extract child objects into dedicated data classes.
    - Map field types: string -> `String`, integer ID -> `Long`, small integer -> `Int`, boolean -> `Boolean`, float/double -> `Double`.
-   - Apply safe defaults (`? = null`, `emptyList()`, `0`, `false`).
+   - Model types strictly according to the API specification without arbitrary default values.
 
 4. **Generate DataSource File**:
    - Write to `app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`.
@@ -189,18 +187,18 @@ class {Name}Repository @Inject constructor(
 
 6. **Verify**:
    - Check Kotlin compilation using `./gradlew compileDebugKotlin`.
-   - Verify all rules (private ApiService, `@Singleton`, `@Inject`, `@SerialName` on all fields, defaults, safe Result via `suspendRunCatching` in Repository).
+   - Verify all rules (private ApiService, `@Singleton`, `@Inject`, `@SerialName` on all fields, safe Result via `suspendRunCatching` in Repository).
 
 ---
 
 ## Red Flags - STOP and Fix
 - Naming response models without the 'Resource' suffix.
+- Assigning arbitrary default values to non-optional fields (e.g. `= emptyList()`, `= 0`, `= false`).
 - Missing `@SerialName` on any field ("because the field name matches camelCase already").
 - Making `ApiService` public or placing it in a separate file.
 - Using `class {Name}DataSource` or `class {Name}Repository` without `@Singleton` or `@Inject`.
 - Base URL missing the trailing slash `/`.
 - Using `Int` for IDs (IDs should be `Long` or `String`).
-- Leaving collection fields without `= emptyList()` default.
 - Forgetting `suspend` keyword on ApiService or Repository methods.
 - Omitting the Repository or putting Repository in the wrong package instead of `com.nlab.androidboot.data`.
 - Using raw `runCatching` instead of `suspendRunCatching` inside suspend functions (which swallows `CancellationException`).
@@ -246,9 +244,9 @@ data class GitHubIssueResponse(
     @SerialName("title") val title: String,
     @SerialName("body") val body: String? = null,
     @SerialName("user") val user: GitHubUserResource,
-    @SerialName("labels") val labels: List<GitHubLabelResource> = emptyList(),
-    @SerialName("locked") val locked: Boolean = false,
-    @SerialName("comments") val comments: Int = 0
+    @SerialName("labels") val labels: List<GitHubLabelResource>,
+    @SerialName("locked") val locked: Boolean,
+    @SerialName("comments") val comments: Int
 )
 
 @Serializable
