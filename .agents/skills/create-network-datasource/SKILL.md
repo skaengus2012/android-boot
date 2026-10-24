@@ -150,7 +150,7 @@ class {Name}Repository @Inject constructor(
 - **Annotation**: Must have `@Singleton`.
 - **Constructor Injection**: Must inject `{Name}DataSource` directly (`@Inject constructor(private val {name}DataSource: {Name}DataSource)`).
 - **Api Failure Handling with `suspendRunCatching`**:
-  - Always use `com.nlab.androidboot.coroutines.suspendRunCatching`.
+  - In suspend functions, always use `com.nlab.androidboot.coroutines.suspendRunCatching` instead of raw `runCatching` to prevent swallowing `CancellationException`.
   - Method return type must be `Result<{Name}Response>` or `Result<List<{Item}Response>>`.
   - `suspendRunCatching` safely rethrows `CancellationException` and logs unhandled exceptions automatically.
 - **Return Value**: Directly return the DataSource's Response Resource wrapped in `Result`. Do not introduce premature domain mapping unless explicitly requested.
@@ -203,7 +203,7 @@ class {Name}Repository @Inject constructor(
 - Leaving collection fields without `= emptyList()` default.
 - Forgetting `suspend` keyword on ApiService or Repository methods.
 - Omitting the Repository or putting Repository in the wrong package instead of `com.nlab.androidboot.data`.
-- Using raw `runCatching` instead of `suspendRunCatching` from `com.nlab.androidboot.coroutines`.
+- Using raw `runCatching` instead of `suspendRunCatching` inside suspend functions (which swallows `CancellationException`).
 - Injecting `Retrofit` or `ApiService` into Repository instead of `{Name}DataSource`.
 - Adding business logic, mutable state (`StateFlow`), in-memory caches, or domain state tracking (such as Favorite toggle) inside a Repository instead of using a dedicated domain StateHolder/Store.
 
