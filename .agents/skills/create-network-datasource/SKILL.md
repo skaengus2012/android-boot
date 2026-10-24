@@ -105,18 +105,18 @@ data class {Nested}Resource(
 - **Return Type**: Return `{Name}Response` or `List<{Item}Response>`.
 
 #### Response Resource Model Rules
-- **No 'Dto' Suffix**: NEVER name models with a `Dto` suffix (e.g. avoid `ProductDto`, `UserDto`). Use `Resource` suffix (e.g., `ProductResource`) or clean domain resource names (e.g., `GitHubUser`, `GitHubLabel`).
+- **Mandatory 'Resource' Suffix**: Every response model MUST end with the `Resource` suffix (e.g., `ProductResource`, `GitHubUserResource`, `GitHubLabelResource`). Do not omit the suffix or use alternative suffixes.
 - **Annotation**: Every model class must be annotated with `@Serializable`.
 - **Explicit SerialName**: EVERY property MUST have `@SerialName("json_key")`.
 - **Nullability & Safe Defaults**:
   - Nullable fields: Must have `? = null` default value (e.g., `val body: String? = null`).
-  - Collections / Lists: Must default to `emptyList()` (e.g., `val labels: List<GitHubLabel> = emptyList()`).
+  - Collections / Lists: Must default to `emptyList()` (e.g., `val labels: List<GitHubLabelResource> = emptyList()`).
   - Booleans: Must have default boolean value (e.g., `val locked: Boolean = false`).
   - Counters / Numeric stats: Must have default zero (e.g., `val comments: Int = 0`).
   - Non-null ID/key fields: Use `Long` for entity IDs (e.g., `val id: Long`) to prevent 32-bit integer overflow.
 - **Nested Models**:
   - Any nested JSON object or array of objects must be extracted into a separate `@Serializable data class` defined below the parent model in the same file.
-  - Model names must be descriptive and PascalCase (e.g., `GitHubUser`, `GitHubLabel`, `ProductResource`).
+  - Model names must be descriptive, PascalCase, and end with `Resource` (e.g., `GitHubUserResource`, `GitHubLabelResource`, `ProductResource`).
 
 ---
 
@@ -194,7 +194,7 @@ class {Name}Repository @Inject constructor(
 ---
 
 ## Red Flags - STOP and Fix
-- Using 'Dto' suffix in model names (use 'Resource' suffix or domain nouns instead).
+- Naming response models without the 'Resource' suffix.
 - Missing `@SerialName` on any field ("because the field name matches camelCase already").
 - Making `ApiService` public or placing it in a separate file.
 - Using `class {Name}DataSource` or `class {Name}Repository` without `@Singleton` or `@Inject`.
@@ -245,21 +245,21 @@ data class GitHubIssueResponse(
     @SerialName("repository_url") val repositoryUrl: String,
     @SerialName("title") val title: String,
     @SerialName("body") val body: String? = null,
-    @SerialName("user") val user: GitHubUser,
-    @SerialName("labels") val labels: List<GitHubLabel> = emptyList(),
+    @SerialName("user") val user: GitHubUserResource,
+    @SerialName("labels") val labels: List<GitHubLabelResource> = emptyList(),
     @SerialName("locked") val locked: Boolean = false,
     @SerialName("comments") val comments: Int = 0
 )
 
 @Serializable
-data class GitHubUser(
+data class GitHubUserResource(
     @SerialName("login") val login: String,
     @SerialName("id") val id: Long,
     @SerialName("avatar_url") val avatarUrl: String
 )
 
 @Serializable
-data class GitHubLabel(
+data class GitHubLabelResource(
     @SerialName("id") val id: Long? = null,
     @SerialName("name") val name: String,
     @SerialName("color") val color: String? = null
