@@ -21,12 +21,13 @@ Analyzes PRDs, problem specifications (PDF, MD, text), and API specifications to
 ### 2. Define Presentation Models (UiModel & UiState)
 - **UiModel**: Decouple complex network Resource models from screen rendering by proposing dedicated UI model classes.
 - **UiState**: Design Unidirectional Data Flow (UDF) LCE (`Loading / Success / Error`) sealed interface.
+- **Screen Navigation (When screens > 1)**: Propose lightweight `@Parcelize sealed interface Screen : Parcelable` routes without external navigation libraries.
 
 ### 3. Propose Sequential Implementation Steps
 - Propose atomic implementation order:
   1. Data layer (Resource models, Retrofit DataSource, Repository via `create-network-datasource`)
   2. Business logic & ViewModel (StateFlow, event handling, data transformation)
-  3. UI presentation (Compose screen, Coil AsyncImage, LCE state branches)
+  3. UI presentation & Navigation (Compose screens, Screen + `SaveableStateHolder` when screens > 1)
 
 ## Rules
 - **Language**: Always output the final analysis briefing in natural Korean (per global rule).

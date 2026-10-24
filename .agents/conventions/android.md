@@ -74,3 +74,10 @@
       )
       ```
   - The UI observes the state, triggers display (e.g. in `LaunchedEffect`), and notifies the ViewModel (e.g. `onMessageShown(id)` or dismiss callback) to clear/reset the consumed state.
+- **Lightweight Navigation for Multi-Screen (Coding Test Standard)**:
+  - For coding tests and small flows (2-4 screens), avoid adding heavy `navigation-compose` (`NavHost`/`NavController`) or Multi-Activity.
+  - Implement zero-dependency, type-safe navigation using `Screen` + `SaveableStateHolder`:
+    1. Define routes: `@Parcelize sealed interface Screen : Parcelable`
+    2. Manage backstack as list state: `var backStack by rememberSaveable { mutableStateOf<List<Screen>>(listOf(Screen.Root)) }`
+    3. Handle system back press: `BackHandler(enabled = backStack.size > 1) { saveableStateHolder.removeState(currentScreen); backStack = backStack.dropLast(1) }`
+    4. Preserve UI and scroll state: `saveableStateHolder.SaveableStateProvider(key = currentScreen) { when (currentScreen) { ... } }`
