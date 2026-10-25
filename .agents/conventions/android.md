@@ -34,6 +34,9 @@
   - Prioritize lazy reactive execution using `stateIn(scope = viewModelScope, started = SharingStarted.Lazily, initialValue = ...)`:
     - `SharingStarted.Lazily` initiates data fetching only when the UI starts collecting `uiState`, and reliably retains state across temporary screen exits without unwanted automatic refetches.
     - Reserve `SharingStarted.WhileSubscribed(5_000)` strictly for continuous real-time streams (e.g. WebSockets, location tracking) where upstream work must actively halt when invisible.
+  - **Pragmatic Complexity Escalation & Consultation**:
+    - If combining multiple interdependent features (e.g. pagination + multi-filtering + optimistic updates + retry triggers) causes reactive Flow transformations (`flatMapLatest`, `combine`) to become excessively convoluted or prone to hidden side-effects:
+    - The developer/agent MUST explicitly explain the rationale for the complexity to the user and consult whether to adopt the pragmatic `MutableStateFlow` + explicit function calls / `init { }` pattern instead of forcing an over-engineered reactive pipeline.
 - **Flow Error Handling & UDF Conventions**:
   - **No Side-Effects in Flow Producers**: Never mutate external state (e.g., calling `showUserMessage()`) inside Flow builder blocks (`flow { }`, `channelFlow { }`). Errors are state, not side-effects; emit errors downstream as pure data.
   - **Two-Tier Pipeline (Private `Result<T>?` vs Public LCE `UiState`)**:
