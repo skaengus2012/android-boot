@@ -4,7 +4,6 @@ import android.content.Context
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
-import kotlinx.serialization.json.Json
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,12 +34,6 @@ object AppScopeProvideModule {
     ): OkHttpClient = OkHttpClient.Builder()
         .apply { interceptors.forEach { addInterceptor(it) } }
         .build()
-
-    @Provides
-    @Singleton
-    fun provideJson(): Json = Json {
-        ignoreUnknownKeys = true
-    }
 
     @Provides
     @Singleton
