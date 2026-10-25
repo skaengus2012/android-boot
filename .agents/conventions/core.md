@@ -1,10 +1,6 @@
 # Android Boot Architecture & Conventions
 
-Core rules that apply to every task. Topic-specific rules live in separate files; which ones to read for a task is defined in the mapping table in [AGENTS.md](../../AGENTS.md).
-
-- [data-network.md](data-network.md): DataSource, Network/domain models, Repository.
-- [viewmodel-state.md](viewmodel-state.md): ViewModel state, UDF, Flow pipelines, concurrency, one-off events.
-- [compose-ui.md](compose-ui.md): Compose UI rules, skipping/performance, navigation.
+Core rules that apply to every task. Topic-specific rules live in separate files as defined in [AGENTS.md](../../AGENTS.md).
 
 ## 1. Package Map
 Source root: `app/src/main/kotlin/com/nlab/androidboot/`. Other docs and skills refer to packages by name from this table instead of repeating paths.
@@ -37,3 +33,7 @@ Dependency direction: `ui` → `data` / `domain`; only `data` may import `networ
   Text(text = "확인") // TODO 다국어 반영
   UserMessage(message = "데이터를 불러오지 못했습니다.") // TODO 다국어 반영
   ```
+
+## 4. Extension Functions
+- **Always Top-level**: Define all extension functions as top-level functions. Never declare member extension functions inside classes.
+
