@@ -9,3 +9,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Claude Code local link to .agents/skills
+.claude/
