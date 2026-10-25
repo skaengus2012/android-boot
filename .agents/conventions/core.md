@@ -21,7 +21,7 @@ Dependency direction: `ui` → `data` / `domain`; only `data` may import `networ
 - **DI**: Hilt (`@HiltViewModel`, `@AndroidEntryPoint`, `@Singleton`).
 - **Network**: Retrofit 2 + Kotlinx Serialization. Delegate to `RetrofitFactory` (`com.nlab.androidboot.network.infra.RetrofitFactory`). Never use Gson, Moshi, or raw OkHttp.
 - **Async & State**: Coroutines + `StateFlow`. Use `suspendRunCatching` (`com.nlab.androidboot.coroutines`) in suspend functions to prevent swallowing `CancellationException`. Never use RxJava or AsyncTask.
-- **Image**: Coil 3 Compose (`AsyncImage`).
+- **Image**: Coil Compose (`AsyncImage`).
 - **No Deprecated APIs**: Never use APIs marked `@Deprecated` (Android SDK, AndroidX, Compose, Kotlin/coroutines, or any library), even if they still compile. Use the replacement the deprecation message recommends (e.g. `TabRow` → `PrimaryTabRow` / `SecondaryTabRow`).
   - Training-data memory is not a reliable source for what is current; when unsure, check the compiler output (`./gradlew compileDebugKotlin` warnings containing `deprecated`) or the library's docs/KDoc before writing the call.
   - Before finishing a change, confirm the build output has no new deprecation warnings from the code you touched. If a deprecated API is truly unavoidable (no replacement exists), the developer/agent MUST state why to the user and add a `// TODO` with the planned migration next to the usage.
