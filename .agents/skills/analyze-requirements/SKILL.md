@@ -19,7 +19,7 @@ Analyzes PRDs, problem specifications (PDF, MD, text), and API specifications to
   - Performance & reactivity (search debounce, pagination, real-time polling).
 
 ### 2. Define Presentation Models (UiModel & UiState)
-- **UiModel**: Decouple domain models (`com.nlab.androidboot.model`) from screen rendering by proposing dedicated UI model classes. Network models (`Network*`) never reach the UI layer.
+- **UiModel**: Decouple domain models from screen rendering by proposing dedicated UI model classes. Network models (`Network*`) never reach the UI layer.
 - **UiState**: Design Unidirectional Data Flow (UDF) LCE (`Loading / Success / Error`) sealed interface.
 - **Screen Navigation (When screens > 1)**: Propose lightweight `@Parcelize sealed interface Screen : Parcelable` routes without external navigation libraries.
 

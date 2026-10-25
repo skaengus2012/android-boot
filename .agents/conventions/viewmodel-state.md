@@ -17,7 +17,7 @@ Read for tasks that add or change a ViewModel, UiState, Flow pipelines, API-call
     ```
   - **No Default Values in `UiState` Properties**: Never provide default parameter values in `UiState` (or its child data classes). The ViewModel must explicitly supply all initial values (e.g. via `MutableStateFlow(UiState(...))` or `stateIn(..., initialValue = ...)`), keeping initial state control strictly within the ViewModel.
 - Never reference Android `View` or `Activity` context inside ViewModels.
-- ViewModels and UiStates consume domain models from `com.nlab.androidboot.model` returned by Repositories. Never import `network.datasource.Network*` models there (see `data-network.md`).
+- ViewModels and UiStates consume domain models from the `data` package returned by Repositories. Never import `network.datasource.Network*` models there (see `data-network.md`).
 - **Avoid API Calls in ViewModel `init` (Prefer Lazy Execution via `SharingStarted.Lazily`)**:
   - Avoid launching coroutines or triggering API calls inside ViewModel `init { }`. Doing so causes premature work upon instantiation, complicates unit testing, and triggers network requests before the UI is actively observing.
   - Prioritize lazy reactive execution using `stateIn(scope = viewModelScope, started = SharingStarted.Lazily, initialValue = ...)`:

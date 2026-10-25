@@ -5,17 +5,19 @@ description: Use when creating or updating network DataSource, Retrofit ApiServi
 
 # Create Network DataSource & Repository
 
+Before generating, read the Package Map in `.agents/conventions/core.md`; packages below are named from it (`network.datasource`, `data`).
+
 ## Overview
 This skill generates complete, production-ready network **DataSource**, **domain model** and **Repository** files for Android, enforcing single-file encapsulation for Retrofit interfaces and Kotlinx Serialization network models, and safe `Result`-wrapped data access that returns domain models.
 
 The workflow creates three kinds of files:
-1. **DataSource File**: `app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`
+1. **DataSource File**: `{Name}DataSource.kt` in `network.datasource`
    - **DataSource Class**: Injected `@Singleton` delegating to Retrofit service via `RetrofitFactory`.
    - **ApiService Interface**: `private` Retrofit interface hidden within the same file.
    - **Network Models**: `@Serializable` Kotlin data classes named `Network{Item}` with mandatory `@SerialName` annotations.
-2. **Domain Model Files**: `app/src/main/kotlin/com/nlab/androidboot/model/{Item}.kt`
+2. **Domain Model Files**: `{Item}.kt` in `data`
    - Plain Kotlin data classes (and enums) that the ViewModel layer consumes. They know nothing about the network.
-3. **Repository File**: `app/src/main/kotlin/com/nlab/androidboot/data/{Name}Repository.kt`
+3. **Repository File**: `{Name}Repository.kt` in `data`
    - **Repository Class**: Injected `@Singleton` receiving `{Name}DataSource`.
    - **Failure Handling**: Handles network/api failures safely via `suspendRunCatching` from `com.nlab.androidboot.coroutines` (rethrowing `CancellationException` to preserve coroutine cancellation and logging exceptions).
    - **Mapping**: Converts `Network{Item}` to the domain model with `private` extension functions in the same file, and returns domain models wrapped in `Result`.
@@ -49,7 +51,7 @@ Every property in every `@Serializable` model MUST have an explicit `@SerialName
 
 ## Mandatory File Structure & Rules
 
-### 1. DataSource File (`app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`)
+### 1. DataSource File (`{Name}DataSource.kt` in `network.datasource`)
 
 A DataSource file MUST follow this exact sequence:
 
@@ -122,10 +124,10 @@ data class Network{Nested}(
 
 ---
 
-### 2. Domain Model Files (`app/src/main/kotlin/com/nlab/androidboot/model/{Item}.kt`)
+### 2. Domain Model Files (`{Item}.kt` in `data`)
 
 ```kotlin
-package com.nlab.androidboot.model
+package com.nlab.androidboot.data
 
 data class {Item}(
     val id: Long,
@@ -135,7 +137,7 @@ data class {Item}(
 ```
 
 #### Domain Model Rules
-- **Package**: `com.nlab.androidboot.model`. One file per top-level model; nested models and related enums live in the same file.
+- **Package**: `data`. One file per top-level model; nested models and related enums live in the same file.
 - **Naming**: Plain names without `Network`, `Resource`, `Response` or `Dto` (e.g., `Product`, `ProductPage`, `GitHubIssue`).
 - **Pure Kotlin**: No `@Serializable` / `@SerialName`, no Android or framework dependencies, no default values.
 - **Preserve Nullability**: A nullable API field stays nullable (`String?`). Do not invent fallback values.
@@ -144,7 +146,7 @@ data class {Item}(
 
 ---
 
-### 3. Repository File (`app/src/main/kotlin/com/nlab/androidboot/data/{Name}Repository.kt`)
+### 3. Repository File (`{Name}Repository.kt` in `data`)
 
 A Repository file MUST follow this exact structure:
 
@@ -152,7 +154,6 @@ A Repository file MUST follow this exact structure:
 package com.nlab.androidboot.data
 
 import com.nlab.androidboot.coroutines.suspendRunCatching
-import com.nlab.androidboot.model.{Item}
 import com.nlab.androidboot.network.datasource.{Name}DataSource
 import com.nlab.androidboot.network.datasource.Network{Item}
 import javax.inject.Inject
@@ -175,7 +176,7 @@ private fun Network{Item}.asModel(): {Item} = {Item}(
 ```
 
 #### Repository Class Rules
-- **Package**: `com.nlab.androidboot.data`.
+- **Package**: `data`.
 - **Annotation**: Must have `@Singleton`.
 - **Constructor Injection**: Must inject `{Name}DataSource` directly (`@Inject constructor(private val {name}DataSource: {Name}DataSource)`).
 - **Api Failure Handling with `suspendRunCatching`**:
@@ -184,7 +185,7 @@ private fun Network{Item}.asModel(): {Item} = {Item}(
   - `suspendRunCatching` safely rethrows `CancellationException` and logs unhandled exceptions automatically.
 - **Return Value**: Return domain models (`Result<{Item}>`, `Result<List<{Item}>>`, `Result<{Item}Page>`), never `Network*` models. Plain `List<String>` / primitive responses are returned as is.
 - **Mapping Location**: Mappers are `private` extension functions named `asModel()` at the bottom of the Repository file. Do not put mapping in the DataSource, the ViewModel, or the UI layer. For lists use `map(Network{Item}::asModel)`.
-- **Strictly Stateless (No Business Logic or State Holders)**: Repositories must act strictly as stateless data coordinators delegating to DataSources. Mapping field-for-field is allowed; never place business logic, in-memory state caching (e.g. `MutableStateFlow`), or domain state tracking (such as Favorite toggle or Cart management) inside the Repository. Domain state synchronization must be handled by dedicated domain state holders (e.g. `FavoriteStore` in `com.nlab.androidboot.domain`) or UseCases.
+- **Strictly Stateless (No Business Logic or State Holders)**: Repositories must act strictly as stateless data coordinators delegating to DataSources. Mapping field-for-field is allowed; never place business logic, in-memory state caching (e.g. `MutableStateFlow`), or domain state tracking (such as Favorite toggle or Cart management) inside the Repository. Domain state synchronization must be handled by dedicated domain state holders (e.g. `FavoriteStore` in `domain`) or UseCases.
 
 ---
 
@@ -210,14 +211,14 @@ private fun Network{Item}.asModel(): {Item} = {Item}(
    - Define the matching domain models with only the fields the app uses; turn fixed-value strings into enums.
 
 4. **Generate DataSource File**:
-   - Write to `app/src/main/kotlin/com/nlab/androidboot/network/datasource/{Name}DataSource.kt`.
+   - Write to `{Name}DataSource.kt` in `network.datasource`.
    - Ensure imports: `RetrofitFactory`, `SerialName`, `Serializable`, `retrofit2.create`, `javax.inject.*`.
 
 5. **Generate Domain Model Files**:
-   - Write to `app/src/main/kotlin/com/nlab/androidboot/model/{Item}.kt`.
+   - Write to `{Item}.kt` in `data`.
 
 6. **Generate Repository File**:
-   - Write to `app/src/main/kotlin/com/nlab/androidboot/data/{Name}Repository.kt`.
+   - Write to `{Name}Repository.kt` in `data`.
    - Ensure imports: `{Name}DataSource`, `Network{Item}`, the domain models, `com.nlab.androidboot.coroutines.suspendRunCatching`, `javax.inject.*`.
    - Implement `suspend fun` returning `Result<{DomainType}>` using `suspendRunCatching { ... .asModel() }` with private `asModel()` extension functions.
 
@@ -239,7 +240,7 @@ private fun Network{Item}.asModel(): {Item} = {Item}(
 - Base URL missing the trailing slash `/`.
 - Using `Int` for IDs (IDs should be `Long` or `String`).
 - Forgetting `suspend` keyword on ApiService or Repository methods.
-- Omitting the Repository or putting Repository in the wrong package instead of `com.nlab.androidboot.data`.
+- Omitting the Repository or putting Repository in the wrong package instead of `data`.
 - Using raw `runCatching` instead of `suspendRunCatching` inside suspend functions (which swallows `CancellationException`).
 - Injecting `Retrofit` or `ApiService` into Repository instead of `{Name}DataSource`.
 - Adding business logic, mutable state (`StateFlow`), in-memory caches, or domain state tracking (such as Favorite toggle) inside a Repository instead of using a dedicated domain StateHolder/Store.
@@ -306,7 +307,7 @@ data class NetworkGitHubLabel(
 
 ### 2. Domain Model: `model/GitHubIssue.kt`
 ```kotlin
-package com.nlab.androidboot.model
+package com.nlab.androidboot.data
 
 data class GitHubIssue(
     val id: Long,
@@ -335,9 +336,6 @@ data class GitHubLabel(
 package com.nlab.androidboot.data
 
 import com.nlab.androidboot.coroutines.suspendRunCatching
-import com.nlab.androidboot.model.GitHubIssue
-import com.nlab.androidboot.model.GitHubLabel
-import com.nlab.androidboot.model.GitHubUser
 import com.nlab.androidboot.network.datasource.GithubDataSource
 import com.nlab.androidboot.network.datasource.NetworkGitHubIssue
 import com.nlab.androidboot.network.datasource.NetworkGitHubLabel
