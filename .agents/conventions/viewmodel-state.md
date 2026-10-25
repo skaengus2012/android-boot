@@ -16,6 +16,7 @@ Read for tasks that add or change a ViewModel, UiState, Flow pipelines, API-call
     }
     ```
   - **No Default Values in `UiState` Properties**: Never provide default parameter values in `UiState` (or its child data classes). The ViewModel must explicitly supply all initial values (e.g. via `MutableStateFlow(UiState(...))` or `stateIn(..., initialValue = ...)`), keeping initial state control strictly within the ViewModel.
+    - **Exception: `UserMessage.id`**: The `id` default of `UserMessage` (`UUID.randomUUID()`) is allowed. It is a generated identity for each message, not an initial value the ViewModel chooses, so it does not conflict with this rule.
 - Never reference Android `View` or `Activity` context inside ViewModels.
 - ViewModels and UiStates consume domain models from the `data` package returned by Repositories. Never import `network.datasource.Network*` models there (see `data-network.md`).
 - **Avoid API Calls in ViewModel `init` (Prefer Lazy Execution via `SharingStarted.Lazily`)**:

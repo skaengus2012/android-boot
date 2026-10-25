@@ -34,7 +34,7 @@ The workflow creates three kinds of files:
 ## Zero-Friction Input Principle
 When the user provides an API endpoint URL, cURL command, or API specification / JSON:
 - **Do NOT ask preliminary questions** (such as DataSource/Repository name, HTTP method, or parameter names) if they can be reasonably inferred.
-- **Infer Base Name Automatically**: Derive PascalCase name from the domain or resource path (e.g., `https://api.github.com/repos/...` -> `GithubDataSource` & `GithubRepository`, `https://newsapi.org/v2/top-headlines` -> `NewsDataSource` & `NewsRepository`).
+- **Infer Base Name Automatically**: Derive PascalCase name from the domain or resource path (e.g., `https://api.github.com/repos/...` -> `GitHubDataSource` & `GitHubRepository`, `https://newsapi.org/v2/top-headlines` -> `NewsDataSource` & `NewsRepository`).
 - **Fetch Sample Data Automatically**: If only an endpoint URL or cURL is provided, immediately run `curl -s "{URL}"` to inspect the response structure.
 - **Infer Endpoint & Parameters Automatically**: Extract path variables (e.g., `{id}`, `{owner}`) and query parameters directly from the URL or spec.
 - **Generate, Verify, and Complete**: Immediately create the DataSource, domain model and Repository files, verify via `./gradlew compileDebugKotlin`, and deliver the result.
@@ -250,7 +250,7 @@ private fun Network{Item}.asModel(): {Item} = {Item}(
 
 ## Canonical Reference Examples
 
-### 1. DataSource: `GithubDataSource.kt`
+### 1. DataSource: `GitHubDataSource.kt`
 ```kotlin
 package com.nlab.androidboot.network.datasource
 
@@ -264,11 +264,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GithubDataSource @Inject constructor(
+class GitHubDataSource @Inject constructor(
     private val retrofitFactory: RetrofitFactory
-) : GithubApiService by retrofitFactory.create("https://api.github.com/").create()
+) : GitHubApiService by retrofitFactory.create("https://api.github.com/").create()
 
-private interface GithubApiService {
+private interface GitHubApiService {
     @GET("repos/{owner}/{repo}/issues")
     suspend fun getIssues(
         @Path("owner") owner: String,
@@ -305,7 +305,7 @@ data class NetworkGitHubLabel(
 )
 ```
 
-### 2. Domain Model: `model/GitHubIssue.kt`
+### 2. Domain Model: `data/GitHubIssue.kt`
 ```kotlin
 package com.nlab.androidboot.data
 
@@ -331,12 +331,12 @@ data class GitHubLabel(
 )
 ```
 
-### 3. Repository: `GithubRepository.kt`
+### 3. Repository: `GitHubRepository.kt`
 ```kotlin
 package com.nlab.androidboot.data
 
 import com.nlab.androidboot.coroutines.suspendRunCatching
-import com.nlab.androidboot.network.datasource.GithubDataSource
+import com.nlab.androidboot.network.datasource.GitHubDataSource
 import com.nlab.androidboot.network.datasource.NetworkGitHubIssue
 import com.nlab.androidboot.network.datasource.NetworkGitHubLabel
 import com.nlab.androidboot.network.datasource.NetworkGitHubUser
@@ -344,14 +344,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GithubRepository @Inject constructor(
-    private val githubDataSource: GithubDataSource
+class GitHubRepository @Inject constructor(
+    private val gitHubDataSource: GitHubDataSource
 ) {
     suspend fun getIssues(
         owner: String,
         repo: String
     ): Result<List<GitHubIssue>> = suspendRunCatching {
-        githubDataSource.getIssues(owner = owner, repo = repo).map(NetworkGitHubIssue::asModel)
+        gitHubDataSource.getIssues(owner = owner, repo = repo).map(NetworkGitHubIssue::asModel)
     }
 }
 
@@ -380,7 +380,7 @@ data class NetworkProductPage(
     @SerialName("limit") val limit: Int
 )
 
-// model/ProductPage.kt
+// data/ProductPage.kt
 data class ProductPage(val products: List<Product>, val total: Int, val skip: Int, val limit: Int)
 
 // data/ProductRepository.kt
