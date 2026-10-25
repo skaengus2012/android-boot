@@ -93,13 +93,14 @@ private interface GitHubApiService {
 }
 
 @Serializable
-data class NetworkGitHubUser(
-    @SerialName("login") val login: String,
-    @SerialName("id") val id: Long
+data class NetworkGitHubIssue(
+    @SerialName("id") val id: Long,
+    @SerialName("number") val number: Int,
+    @SerialName("title") val title: String
 )
 
-// data/GitHubUser.kt
-data class GitHubUser(val login: String, val id: Long)
+// data/GitHubIssue.kt
+data class GitHubIssue(val id: Long, val number: Int, val title: String)
 
 // data/GitHubRepository.kt
 @Singleton
@@ -111,5 +112,5 @@ class GitHubRepository @Inject constructor(
     }
 }
 
-private fun NetworkGitHubUser.asModel(): GitHubUser = GitHubUser(login = login, id = id)
+private fun NetworkGitHubIssue.asModel(): GitHubIssue = GitHubIssue(id = id, number = number, title = title)
 ```
