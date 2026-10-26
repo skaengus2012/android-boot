@@ -11,10 +11,12 @@ Source root: `app/src/main/kotlin/com/nlab/androidboot/`. Other docs and skills 
 | `network.datasource` | Everything built with Retrofit | `{Name}DataSource.kt` (single file: `Network*` models, private ApiService, DataSource) | Domain models, mapping |
 | `data` | Data access API for the app | `{Name}Repository.kt`, domain models `{Item}.kt` | Business logic, in-memory state, `Network*` in public signatures |
 | `domain.{feature}` | Domain state holders | `FavoriteStore` and similar singletons | Network access |
-| `ui` | Presentation | ViewModel, UiState, UiModel, composables | `Network*` imports |
+| `feature.{name}` | Feature presentation logic | `{Name}ViewModel.kt` (ViewModel, UiState, UiModel) | Composables, Compose UI types (`Color`, `Dp`, ...), `Network*` imports |
+| `feature.{name}.ui` | Feature UI | Screen and item composables | `Network*` imports |
+| `ui.theme` | Shared Compose theme | `Color`, `Type`, `Theme` | Feature code |
 | `coroutines`, `utils` | Shared helpers | `suspendRunCatching`, `UserMessage` | Feature code |
 
-Dependency direction: `ui` → `data` / `domain`; only `data` may import `network.datasource.Network*`.
+Dependency direction: `feature.{name}.ui` → `feature.{name}` → `data` / `domain`; only `data` may import `network.datasource.Network*`.
 
 ## 2. Tech Stack & Rules
 - **UI**: Jetpack Compose Material 3 (No legacy XML, No Material 2).

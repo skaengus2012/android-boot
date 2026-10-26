@@ -5,6 +5,7 @@ Read for tasks that build or change Compose screens, list items, animations, or 
 ## Compose Rules
 - Always provide unique keys in lazy lists: `items(items, key = { it.id })`.
 - Pass lambda callbacks rather than entire ViewModel instances to leaf composables.
+- **Screen structure**: Give a screen two composables with the same name. The public `XxxScreen(viewModel = hiltViewModel())` collects `uiState` with `collectAsStateWithLifecycle()` and wires the ViewModel calls. The `XxxScreen(uiState, onXxx...)` overload below it only renders the state and takes lambdas; it never receives the ViewModel, so it can be previewed and tested with plain state.
 - **Strong Skipping Mode is Assumed ON** (Compose compiler default since Kotlin 2.0.20; never disable it via `featureFlags`/compiler options). Write and review all Compose code under this assumption:
   - Composables with unstable parameters are still skippable. Stable parameters are compared with `equals()`, unstable ones with instance identity (`===`).
   - Lambdas and function references (`viewModel::onClick`) are memoized automatically. Do NOT wrap them in `remember { }` or add `@Stable`/`@Immutable` solely to fix skipping.
