@@ -1,7 +1,5 @@
 package com.nlab.androidboot.utils
 
-import java.util.UUID
-
 /**
  * 단발성 UI 이벤트(스낵바, 다이얼로그 등)를 State로 관리하기 위한 모델.
  * Google Architecture 권장 사항('ViewModel: One-off event antipatterns')을 준수합니다.
@@ -11,5 +9,5 @@ import java.util.UUID
  */
 data class UserMessage(
     val message: String,
-    val id: Long = UUID.randomUUID().mostSignificantBits
+    val id: Long = generateUniqueId()
 )
