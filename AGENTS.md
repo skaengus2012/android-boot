@@ -20,3 +20,4 @@ Typical combinations: API list screen → `data-network` + `viewmodel-state` + `
 Available agent workflows and tool runbooks are located in `.agents/skills/`:
 - `analyze-requirements`: Requirement analysis and UI model breakdown.
 - `create-network-datasource`: Network DataSource, domain model and Repository generation.
+- `qa-on-device`: Self-QA of an implemented feature on an emulator or physical device with Maestro, based on the analysis document.
