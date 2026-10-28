@@ -71,7 +71,7 @@ Read for tasks that add or change a ViewModel, UiState, Flow pipelines, API-call
       // com.nlab.androidboot.utils.UserMessage
       data class UserMessage(
           val message: String,
-          val id: Long = UUID.randomUUID().mostSignificantBits
+          val id: Long = generateUniqueId()
       )
       ```
   - The UI observes the state, triggers display (e.g. in `LaunchedEffect`), and notifies the ViewModel (e.g. `onMessageShown(id)` or dismiss callback) once it is gone, whatever the reason (timeout, action, or dismiss), to clear/reset the consumed state.
